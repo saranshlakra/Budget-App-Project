@@ -83,6 +83,22 @@
         percentage: data.percentage,
       };
     },
+
+    deleteItem: function (type, id) {
+      let del, delIdIndex;
+      del = data.allItems[type].map(function (currentid) {
+        return currentid.id;
+      });
+
+      console.log(del);
+
+      delIdIndex = del.indexOf(id);
+
+      if (delIdIndex !== -1) {
+        // -1 when it doesn't find the index(or undefined aaye)
+        data.allItems[type].splice(delIdIndex, 1); // splice( jaha se start karna hai del karna, kitne element delete krne hai )
+      }
+    },
     //just for console testing
     testing: function () {
       console.log(data);
@@ -105,6 +121,8 @@ let uiController = (function () {
     expenseLabel: ".budget__expenses--value",
     percentageLabel: ".budget__expenses--percentage",
     percentage1Label: ".item__percentage",
+    container: ".container",
+    item: ".item",
   };
   return {
     getInput: function () {
@@ -127,14 +145,14 @@ let uiController = (function () {
         // ye type 'inc' hai bcuz html mein inc likhi hai iski value
         element = DOMstrings.incomeContainer;
         html =
-          '<div class="item clearfix" id="income-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+          '<div class="item clearfix" id="inc-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
       } else if (type === "exp") {
         element = DOMstrings.expenseContainer;
         html =
-          ' <div class="item clearfix" id="expense-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">#21%#</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+          ' <div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">#21%#</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
       }
       // Replacing placeholder text with actual data
-      newHtml = html.replace("%id", obj.id);
+      newHtml = html.replace("%id%", obj.id);
       newHtml = newHtml.replace("%description%", obj.description);
       newHtml = newHtml.replace("%value%", obj.value);
       // newHtml = newHtml.replace("#21%#", objBudget.percentage);
@@ -172,6 +190,7 @@ let uiController = (function () {
       // document.querySelector(DOMstrings.percentage1Label).textContent =
       //   objBudget.percentage + "%";
     },
+    removeItem: function () {},
   };
 })();
 
@@ -188,6 +207,9 @@ let backendController = (function (appCtrl, uiCtrl) {
     }; // press click or enter to add value to db function.
 
     document.querySelector(DOM.input_btn).addEventListener("click", clickEnter);
+    document
+      .querySelector(DOM.container)
+      .addEventListener("click", ctrlDeleteItem); // here we select container class as target, event delegation.
     document.addEventListener("keypress", clickEnter);
   };
 
@@ -220,6 +242,22 @@ let backendController = (function (appCtrl, uiCtrl) {
     }
   };
 
+  let ctrlDeleteItem = function (event) {
+    let itemID, splitID, type, id;
+    itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
+    if (itemID) {
+      splitID = itemID.split("-");
+      type = splitID[0];
+      id = parseInt(splitID[1]);
+    }
+
+    // 1. Delete the item from the data structure/db
+    appController.deleteItem(type, id);
+    // 2. Delete the item from UI
+
+    // 3. Update and show the new budget/calculation to the UI
+  };
+
   return {
     init: function () {
       console.log("HELLO FRIENDS");
@@ -230,3 +268,40 @@ let backendController = (function (appCtrl, uiCtrl) {
 })(appController, uiController);
 
 backendController.init();
+
+/*---------Traditional way to repeat value like we need in line 228---------
+let a = ".parentNode";
+let b = 4 * a;
+b.toString;
+console.log(b);
+let str, a1;
+function repeatString(str, number) {
+  a1 = "";
+
+  while (number > 0) {
+    a1 += str;
+    number--;
+  }
+
+  return a1;
+}
+
+repeatString(".parentNode", 4);
+console.log(a1);
+
+//----------------new way of repeating strings------------------
+let b1 = ".parentNode";
+let b2 = b1.repeat(4);
+console.log(b2);
+*/
+/*---------Understanding map() method-------------
+var ac = [1, 2, 3, 4];
+var b = ac.map(function (value1) {
+  value1.c1;
+  return value1;
+});
+console.log(b);
+var c = ac.indexOf(3);
+console.log(ac);
+console.log(c);
+*/
