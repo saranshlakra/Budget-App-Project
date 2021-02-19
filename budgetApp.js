@@ -68,9 +68,11 @@
       data.allItems[type].push(newItem);
       return newItem;
     },
-    budgetCalc: function (type) {
+    budgetCalc: function () {
       // type coming from calcinc from backend controller
-      calcIncExp(type);
+      // calcIncExp(type); // ismein error arhai hai jismein budget remove ke baad jab income remove kr rhe hai to change nhiho rha final mein
+      calcIncExp("inc");
+      calcIncExp("exp");
       calcBudget();
       calcPercentage();
     },
@@ -90,11 +92,13 @@
         return currentid.id;
       });
 
-      console.log(del);
-
+      console.log(del); // to check this write appController.deleteItem('inc or exp', 2); in     console.
+      console.log(data.allItems[type]);
       delIdIndex = del.indexOf(id);
+      console.log(delIdIndex);
 
       if (delIdIndex !== -1) {
+        //ye db se delete kardega item ko
         // -1 when it doesn't find the index(or undefined aaye)
         data.allItems[type].splice(delIdIndex, 1); // splice( jaha se start karna hai del karna, kitne element delete krne hai )
       }
@@ -190,7 +194,10 @@ let uiController = (function () {
       // document.querySelector(DOMstrings.percentage1Label).textContent =
       //   objBudget.percentage + "%";
     },
-    removeItem: function () {},
+    removeItem: function (itemID) {
+      let el = document.getElementById(itemID);
+      el.parentNode.removeChild(el);
+    },
   };
 })();
 
@@ -238,7 +245,7 @@ let backendController = (function (appCtrl, uiCtrl) {
 
       uiController.addItemToList(newItem, input.type, finalBudget);
       uiController.clearFields();
-      updateBudget(input.type);
+      updateBudget();
     }
   };
 
@@ -254,8 +261,9 @@ let backendController = (function (appCtrl, uiCtrl) {
     // 1. Delete the item from the data structure/db
     appController.deleteItem(type, id);
     // 2. Delete the item from UI
-
+    uiController.removeItem(itemID);
     // 3. Update and show the new budget/calculation to the UI
+    updateBudget();
   };
 
   return {
@@ -295,9 +303,9 @@ let b2 = b1.repeat(4);
 console.log(b2);
 */
 /*---------Understanding map() method-------------
-var ac = [1, 2, 3, 4];
+var ac = ["a1", "a3", "a2", "a4", "a8", "a7"];
 var b = ac.map(function (value1) {
-  value1.c1;
+  value1 = value1.c1;
   return value1;
 });
 console.log(b);
