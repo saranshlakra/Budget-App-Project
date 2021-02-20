@@ -5,6 +5,19 @@
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1;
+  };
+
+  Expense.prototype.calcPercentage = function (totalIncome) {
+    if (totalIncome > 0) {
+      this.percentage = Math.round((this.value / totalIncome) * 100);
+    } else {
+      this.percentage = -1;
+    }
+  };
+
+  Expense.prototype.getPercentage = function () {
+    return this.percentage;
   };
 
   let Income = function (id, description, value) {
@@ -103,6 +116,19 @@
         data.allItems[type].splice(delIdIndex, 1); // splice( jaha se start karna hai del karna, kitne element delete krne hai )
       }
     },
+
+    calcPercentage: function () {
+      data.allItems.exp.forEach(function (cur) {
+        cur.calcPercentage(data.total.inc);
+      });
+    },
+
+    getPercentages: function () {
+      var allperc = data.allItems.exp.map(function (value) {
+        return value.getPercentage();
+      });
+      return allperc;
+    },
     //just for console testing
     testing: function () {
       console.log(data);
@@ -124,7 +150,7 @@ let uiController = (function () {
     incomeLabel: ".budget__income--value",
     expenseLabel: ".budget__expenses--value",
     percentageLabel: ".budget__expenses--percentage",
-    percentage1Label: ".item__percentage",
+    expPercentageLabel: ".item__percentage",
     container: ".container",
     item: ".item",
   };
@@ -159,7 +185,6 @@ let uiController = (function () {
       newHtml = html.replace("%id%", obj.id);
       newHtml = newHtml.replace("%description%", obj.description);
       newHtml = newHtml.replace("%value%", obj.value);
-      // newHtml = newHtml.replace("#21%#", objBudget.percentage);
 
       // Inserting some actual data
       document.querySelector(element).insertAdjacentHTML("beforeend", newHtml);
@@ -193,6 +218,23 @@ let uiController = (function () {
       }
       // document.querySelector(DOMstrings.percentage1Label).textContent =
       //   objBudget.percentage + "%";
+    },
+
+    displayPercentage: function (percentages) {
+      var fields = document.querySelectorAll(DOMstrings.expPercentageLabel);
+      var NodeListforEach = function (list, callback) {
+        // we make this seperate fb to use it in future for any nodelist
+        for (var i = 0; i <= list.length; i++) {
+          callback(list[i], i); // here we use first class fn concept.
+        }
+      };
+      NodeListforEach(fields, function (current, index) {
+        if (percentages[index] > 0) {
+          current.textContent = percentages[index] + "%";
+        } else if (percentages[index] < 0) {
+          current.textContent = "....";
+        }
+      });
     },
     removeItem: function (itemID) {
       let el = document.getElementById(itemID);
@@ -241,12 +283,28 @@ let backendController = (function (appCtrl, uiCtrl) {
       console.log(input.type); // only for testing purpose
       console.log(newItem);
       // console.log(percentage);
-      var finalBudget = appController.getBudget(); //2 get budget
+      var finalBudget1 = appController.getBudget(); //2 get budget
 
-      uiController.addItemToList(newItem, input.type, finalBudget);
+      uiController.addItemToList(
+        newItem,
+        input.type,
+        updatePercentage.percentages
+      );
       uiController.clearFields();
       updateBudget();
+      updatePercentage();
     }
+  };
+
+  let updatePercentage = function () {
+    // 1. calculate percentage for each expense
+    appController.calcPercentage();
+
+    // 2. get percentage for each expenses
+    var percentages = appController.getPercentages();
+
+    // 3. update the ui with new percentages
+    uiController.displayPercentage(percentages);
   };
 
   let ctrlDeleteItem = function (event) {
